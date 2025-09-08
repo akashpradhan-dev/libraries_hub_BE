@@ -1,11 +1,7 @@
-import { UserPayload } from '@/controller/Auth';
 import { Request, Response, NextFunction } from 'express';
 
-interface AuthRequest extends Request {
-  user?: UserPayload;
-}
-
-export const isAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+  // @ts-expect-error - user will send the payload
   if (req.user?.role !== 'admin') {
     return res.status(403).json({
       success: false,

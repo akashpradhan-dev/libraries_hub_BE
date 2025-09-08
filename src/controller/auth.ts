@@ -4,13 +4,6 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { generateToken } from '@/utils/generateToken';
 
-export interface UserPayload {
-  _id: string;
-  name: string;
-  email: string;
-  role: 'user' | 'admin';
-}
-
 export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
@@ -26,7 +19,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...userWithoutPassword } = user.toObject();
+    const { password: _, likes, ...userWithoutPassword } = user.toObject();
 
     const token = generateToken({ _id: user._id.toString(), role: user.role });
 
@@ -64,7 +57,7 @@ export const register = async (req: Request, res: Response) => {
     const savedUser = await newUser.save();
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...userWithoutPassword } = savedUser.toObject();
+    const { password: _, likes, ...userWithoutPassword } = savedUser.toObject();
 
     const token = generateToken({ _id: savedUser._id.toString(), role: savedUser.role });
 

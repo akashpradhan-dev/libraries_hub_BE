@@ -1,11 +1,10 @@
 // middlewares/auth.ts
-import { UserPayload } from '@/controller/Auth';
-import User from '@/model/User';
+import User, { UserPayload } from '@/model/User';
 import { errorResponse } from '@/utils/response';
 import { Request, Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   user?: UserPayload;
 }
 
@@ -14,7 +13,7 @@ interface CustomJwtPayload extends JwtPayload {
   role: string;
 }
 
-export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
