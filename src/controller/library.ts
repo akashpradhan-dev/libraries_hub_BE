@@ -5,7 +5,12 @@ import { Request, Response } from 'express';
 
 export const createLibrary = async (req: Request, res: Response) => {
   try {
-    const { name, description, repositoryUrl, homepageUrl, tags, exampleUsage, userId } = req.body;
+    // @ts-expect-error: Assume user object has _id property injected by authentication middleware
+    const userId = req?.user?._id;
+    if (!userId) {
+      return errorResponse(res, 'User not authenticated', 401);
+    }
+    const { name, description, repositoryUrl, homepageUrl, tags, exampleUsage } = req.body;
 
     if (!name || !description || !repositoryUrl) {
       return errorResponse(res, 'Missing required fields', 400);

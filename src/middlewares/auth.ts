@@ -1,4 +1,3 @@
-// middlewares/auth.ts
 import User, { UserPayload } from '@/model/User';
 import { errorResponse } from '@/utils/response';
 import { Request, Response, NextFunction } from 'express';

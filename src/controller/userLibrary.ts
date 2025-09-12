@@ -66,11 +66,40 @@ export const likedLibraryList = async (req: Request, res: Response) => {
     }
 
     const response = {
-      userId: libList._id,
-      likedList: libList.likes,
+      libraries: libList.likes,
     };
 
     return successResponse(res, response, 'library list fached succesfully', 200);
+  } catch (error) {
+    return errorResponse(res, 'Failed to update library status', 500, error);
+  }
+};
+
+export const myLibraryList = async (req: Request, res: Response) => {
+  try {
+    // @ts-expect-error - ignor this
+    const userId = req?.user?._id;
+    const libraries = await Library.find({ createdBy: userId }).sort({ createdAt: -1 });
+    return successResponse(res, libraries, 'library list fached succesfully', 200);
+  } catch (error) {
+    return errorResponse(res, 'Failed to update library status', 500, error);
+  }
+};
+
+export const myLibraryById = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    // @ts-expect-error - ignor this
+    const userId = req?.user?._id;
+
+    const library = await Library.findOne({ _id: id, createdBy: userId });
+
+    if (!library) {
+      return successResponse(res, {}, 'no library found', 200);
+    }
+
+    return successResponse(res, library, 'library fached succesfully', 200);
   } catch (error) {
     return errorResponse(res, 'Failed to update library status', 500, error);
   }
