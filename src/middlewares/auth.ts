@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-import User, { UserPayload } from '@/model/User';
-export interface AuthRequest extends Request {
-  user?: UserPayload;
-}
+import jwt from 'jsonwebtoken';
+import User from '@/model/User';
+import { UserPayload } from '@/types/types';
+
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // cookie-parser puts cookies in req.cookies
@@ -13,11 +12,9 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload & {
-      id: string;
-    };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as UserPayload;
 
-    const user = await User.findById(decoded.id).select('-password');
+    const user = await User.findById(decoded._id).select('-password');
     if (!user) {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
@@ -27,7 +24,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       name: user.name,
       email: user.email,
       role: user.role,
-    };
+    } as UserPayload;
 
     next();
   } catch (error) {

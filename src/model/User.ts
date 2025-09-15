@@ -29,10 +29,3 @@ const userSchema = new Schema<IUser>(
 );
 
 export default mongoose.model<IUser>('User', userSchema);
-
-export interface UserPayload {
-  _id: string;
-  name: string;
-  email: string;
-  role: 'user' | 'admin';
-}

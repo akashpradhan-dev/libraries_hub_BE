@@ -1,10 +1,11 @@
 import { getLibraries, getLibraryById } from '@/controller/library';
+import { optionalAuth } from '@/middlewares/optionalAuth';
 import { Router } from 'express';
 
 const router = Router();
 
 // get all libraries
-router.get('/', getLibraries);
+router.get('/', optionalAuth, getLibraries);
 // get a library by id
 router.get('/:id', getLibraryById);
 // // update a library by id

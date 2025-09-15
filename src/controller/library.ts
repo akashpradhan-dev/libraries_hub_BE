@@ -1,14 +1,28 @@
 import Library from '@/model/Library';
+import { AuthRequest } from '@/types/types';
 import { errorResponse, successResponse } from '@/utils/response';
 import { isValidId } from '@/utils/validId';
 import { Request, Response } from 'express';
 
 export const getLibraries = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?._id;
+
     const libraries = await Library.find({
       status: 'approved',
     }).populate('createdBy', 'name email');
-    return successResponse(res, libraries, 'Libraries retrieved successfully', 200);
+
+    const librariesWithLiked = libraries.map((lib) => {
+      const liked = lib?.likes?.some((id) => id?.toString() === userId?.toString());
+
+      return {
+        ...lib.toObject(),
+        liked,
+      };
+    });
+
+    return successResponse(res, librariesWithLiked, 'Libraries retrieved successfully', 200);
   } catch (error) {
     return errorResponse(res, 'Failed to retrieve libraries', 500, error);
   }

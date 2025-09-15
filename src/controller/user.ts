@@ -1,5 +1,6 @@
 import Library from '@/model/Library';
 import User from '@/model/User';
+import { AuthRequest } from '@/types/types';
 import { errorResponse, successResponse } from '@/utils/response';
 import { isValidId } from '@/utils/validId';
 import { Request, Response } from 'express';
@@ -11,8 +12,10 @@ interface RequestBodyParam {
 
 export const createLibrary = async (req: Request, res: Response) => {
   try {
-    // @ts-expect-error: Assume user object has _id property injected by authentication middleware
-    const userId = req?.user?._id;
+    const authReq = req as AuthRequest;
+
+    const userId = authReq.user?._id;
+
     if (!userId) {
       return errorResponse(res, 'User not authenticated', 401);
     }
@@ -68,8 +71,9 @@ export const likeLibrary = async (req: Request, res: Response) => {
   try {
     const { libraryId, liked }: RequestBodyParam = req.body;
 
-    // @ts-expect-error - ignor this
-    const userId = req?.user?._id;
+    const authReq = req as AuthRequest;
+
+    const userId = authReq.user?._id;
     const existUser = await User.findById({ _id: userId });
     if (!existUser) {
       return errorResponse(res, 'Failed to find user', 400);
@@ -80,7 +84,13 @@ export const likeLibrary = async (req: Request, res: Response) => {
       return errorResponse(res, 'Failed to find library', 400);
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
+    await Library.findByIdAndUpdate(
+      libraryId,
+      liked ? { $addToSet: { likes: userId } } : { $pull: { likes: userId } },
+      { new: true }
+    );
+
+    const likedLibrary = await User.findByIdAndUpdate(
       userId,
       liked ? { $addToSet: { likes: libraryId } } : { $pull: { likes: libraryId } },
       { new: true }
@@ -89,7 +99,7 @@ export const likeLibrary = async (req: Request, res: Response) => {
       .populate('likes')
       .lean();
 
-    if (!updatedUser) {
+    if (!likedLibrary) {
       return errorResponse(res, 'Failed to update user likes', 400);
     }
 
@@ -108,19 +118,24 @@ export const likeLibrary = async (req: Request, res: Response) => {
 
 export const likedLibraryList = async (req: Request, res: Response) => {
   try {
-    // @ts-expect-error - ignor this
-    const userId = req?.user?._id;
+    const authReq = req as AuthRequest;
+
+    const userId = authReq.user?._id;
+
     const libList = await User.findById({ _id: userId }).select('_id').populate('likes').lean();
 
     if (!libList) {
       return successResponse(res, {}, 'no library liked', 200);
     }
 
-    const response = {
-      libraries: libList.likes,
-    };
+    const likedLibrary = libList.likes?.map((lib) => {
+      return {
+        ...lib,
+        liked: true,
+      };
+    });
 
-    return successResponse(res, response, 'library list fached succesfully', 200);
+    return successResponse(res, likedLibrary, 'library list fached succesfully', 200);
   } catch (error) {
     return errorResponse(res, 'Failed to update library status', 500, error);
   }
@@ -128,8 +143,9 @@ export const likedLibraryList = async (req: Request, res: Response) => {
 
 export const myLibraryList = async (req: Request, res: Response) => {
   try {
-    // @ts-expect-error - ignor this
-    const userId = req?.user?._id;
+    const authReq = req as AuthRequest;
+
+    const userId = authReq.user?._id;
     const libraries = await Library.find({ createdBy: userId }).sort({ createdAt: -1 });
     return successResponse(res, libraries, 'library list fached succesfully', 200);
   } catch (error) {
@@ -141,8 +157,9 @@ export const myLibraryById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
-    // @ts-expect-error - ignor this
-    const userId = req?.user?._id;
+    const authReq = req as AuthRequest;
+
+    const userId = authReq.user?._id;
 
     const library = await Library.findOne({ _id: id, createdBy: userId });
 

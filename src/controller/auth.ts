@@ -1,8 +1,9 @@
-import User, { UserPayload } from '@/model/User';
+import User from '@/model/User';
 import { errorResponse, successResponse } from '@/utils/response';
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { generateToken } from '@/utils/generateToken';
+import { UserPayload } from '@/types/types';
 
 export const login = async (req: Request, res: Response) => {
   try {

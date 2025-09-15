@@ -64,8 +64,13 @@ const LibrarySchema = new mongoose.Schema(
         'Build Tool',
         'Other',
       ],
-      required: true,
     },
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     timestamps: true,
