@@ -1,4 +1,4 @@
-import User from '@/model/User';
+import User, { UserPayload } from '@/model/User';
 import { errorResponse, successResponse } from '@/utils/response';
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
@@ -13,9 +13,11 @@ export const login = async (req: Request, res: Response) => {
       return errorResponse(res, 'Invalid email or password----', 401);
     }
 
-    const isPasswordValid = await bcrypt.compareSync(password, user.password);
-    if (!isPasswordValid) {
-      return errorResponse(res, 'Invalid email or password', 401);
+    if (user.password) {
+      const isPasswordValid = await bcrypt.compareSync(password, user.password);
+      if (!isPasswordValid) {
+        return errorResponse(res, 'Invalid email or password', 401);
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -23,12 +25,14 @@ export const login = async (req: Request, res: Response) => {
 
     const token = generateToken({ _id: user._id.toString(), role: user.role });
 
-    const payload = {
-      ...userWithoutPassword,
-      token: token,
-    };
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
-    return successResponse(res, payload, 'Login successful', 200);
+    return successResponse(res, userWithoutPassword, 'Login successful', 200);
   } catch (error) {
     return errorResponse(res, 'Failed to login', 500, error);
   }
@@ -61,12 +65,72 @@ export const register = async (req: Request, res: Response) => {
 
     const token = generateToken({ _id: savedUser._id.toString(), role: savedUser.role });
 
-    return successResponse(
-      res,
-      { user: userWithoutPassword, token },
-      'User registered successfully',
-      201
-    );
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return successResponse(res, userWithoutPassword, 'User registered successfully', 201);
+  } catch (error) {
+    return errorResponse(res, 'Failed to register user', 500, error);
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    return errorResponse(res, 'Failed to login', 500, error);
+  }
+};
+
+export const googleAuth = async (req: Request, res: Response) => {
+  const user = req.user as UserPayload;
+
+  if (!user) {
+    return res.redirect('/login');
+  }
+
+  const token = generateToken({ _id: user._id, role: user.role });
+
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  res.cookie('role', 'user', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  const frontendUrl = 'http://localhost:3000/oauth-success';
+
+  res.redirect(frontendUrl);
+};
+
+export const getMe = async (req: Request, res: Response) => {
+  try {
+    const user = req.user as UserPayload;
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    return successResponse(res, user, 'User registered successfully', 201);
   } catch (error) {
     return errorResponse(res, 'Failed to register user', 500, error);
   }

@@ -2,7 +2,7 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '@/model/User';
-import jwt from 'jsonwebtoken';
+// import { generateToken } from '@/utils/generateToken';
 
 passport.use(
   new GoogleStrategy(
@@ -20,19 +20,16 @@ passport.use(
             name: profile.displayName,
             email: profile.emails?.[0].value,
             role: 'user',
+            googleId: profile.id,
           });
           await user.save();
         }
 
         // generate JWT
-        const token = jwt.sign(
-          { id: user._id.toString(), role: user.role },
-          process.env.JWT_SECRET as string,
-          { expiresIn: '7d' }
-        );
+        // const token = generateToken({ _id: user._id.toString(), role: user.role });
 
         // pass user + token to callback
-        done(null, { user, token });
+        done(null, user);
       } catch (err) {
         done(err, undefined);
       }
