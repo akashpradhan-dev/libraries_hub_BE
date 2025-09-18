@@ -51,7 +51,6 @@ export const createLibrary = async (req: Request, res: Response) => {
       tags,
       exampleUsage,
       createdBy: userId,
-      status: 'pending',
       category,
       language,
       framework,
@@ -204,14 +203,47 @@ export const updateLibrary = async (req: Request, res: Response) => {
 
 export const deleteLibrary = async (req: Request, res: Response) => {
   const { id } = req.params;
+
   try {
-    const library = await Library.findById(id);
+    if (!isValidId(id)) {
+      return errorResponse(res, 'Invalid library ID', 400);
+    }
+    const library = await Library.findByIdAndDelete(id);
+    console.log(library);
+
     if (!library) {
       return errorResponse(res, 'Library not found', 404);
     }
 
-    await library.deleteOne();
     return successResponse(res, {}, 'Library deleted successfully', 200);
+  } catch (error) {
+    return errorResponse(res, 'Failed to delete library', 500, error);
+  }
+};
+
+export const publishLibrary = async (req: Request, res: Response) => {
+  try {
+    const libraryId = req.params.id;
+
+    const { action } = req.body;
+
+    if (action !== 'publish') {
+      return errorResponse(res, 'Not a valid status', 400);
+    }
+
+    if (!isValidId(libraryId)) {
+      return errorResponse(res, 'Not a valid libraryId', 400);
+    }
+
+    const isLibraryExist = await Library.findById(libraryId);
+
+    if (!isLibraryExist) {
+      return errorResponse(res, 'library not exist in our system', 400);
+    }
+
+    await Library.findByIdAndUpdate(libraryId, { status: 'pending' }, { new: true });
+
+    return successResponse(res, {}, 'Library send to approval', 200);
   } catch (error) {
     return errorResponse(res, 'Failed to delete library', 500, error);
   }

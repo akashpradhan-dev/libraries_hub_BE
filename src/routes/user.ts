@@ -5,6 +5,7 @@ import {
   likeLibrary,
   myLibraryById,
   myLibraryList,
+  publishLibrary,
   updateLibrary,
 } from '@/controller/user';
 import { authenticate } from '@/middlewares/auth';
@@ -28,5 +29,7 @@ router.get('/my-library/:id', authenticate, myLibraryById);
 router.put('/my-library/:id', authenticate, updateLibrary);
 
 router.delete('/my-library/:id', authenticate, deleteLibrary);
+
+router.patch('/my-library/publish/:id', authenticate, publishLibrary);
 
 export default router;
