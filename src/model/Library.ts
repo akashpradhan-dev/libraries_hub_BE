@@ -10,7 +10,11 @@ const LibrarySchema = new mongoose.Schema(
     tags: [{ type: String }],
     exampleUsage: { type: String },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected', 'created'],
+      default: 'created',
+    },
     category: {
       type: String,
       enum: ['Backend', 'FrontEnd', 'Mobile', 'DevOps'],

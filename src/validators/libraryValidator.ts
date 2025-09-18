@@ -6,6 +6,9 @@ export const createLibraryValidator = [
   body('repositoryUrl')
     .notEmpty()
     .withMessage('Repository URL is required')
-    .isURL()
+    .isURL({
+      protocols: ['https', 'http'],
+      require_protocol: true,
+    })
     .withMessage('Repository URL must be a valid URL'),
 ];
