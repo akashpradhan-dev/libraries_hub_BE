@@ -9,7 +9,11 @@ const app = express();
 
 app.use(morgan('dev'));
 
-const allowedOrigins = ['https://devvolt.vercel.app', 'https://devvolt-dev.vercel.app'];
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://devvolt.vercel.app',
+  'https://devvolt-dev.vercel.app',
+];
 
 app.use(
   cors({
