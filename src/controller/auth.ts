@@ -105,22 +105,23 @@ export const googleAuth = async (req: Request, res: Response) => {
 
   const token = generateToken({ _id: user._id, role: user.role });
 
+  const isProd = process.env.NODE_ENV === 'production';
+
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // only send over HTTPS
-    sameSite: 'none', // required for cross-site
+    secure: isProd, // only send over HTTPS
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   res.cookie('role', 'user', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'none',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   const frontendUrl = process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL!;
-  console.log('Redirecting to:', frontendUrl);
 
   res.redirect(frontendUrl);
 };
