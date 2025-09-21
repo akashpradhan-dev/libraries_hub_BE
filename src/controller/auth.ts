@@ -109,9 +109,10 @@ export const googleAuth = async (req: Request, res: Response) => {
 
   res.cookie('token', token, {
     httpOnly: true,
-    secure: isProd, // only send over HTTPS
+    secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
+    domain: isProd ? '.vercel.app' : 'localhost',
   });
 
   res.cookie('role', 'user', {
@@ -119,6 +120,7 @@ export const googleAuth = async (req: Request, res: Response) => {
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
+    domain: isProd ? '.vercel.app' : 'localhost',
   });
 
   const frontendUrl = process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL!;
