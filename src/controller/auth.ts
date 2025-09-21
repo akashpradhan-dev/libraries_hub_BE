@@ -107,19 +107,20 @@ export const googleAuth = async (req: Request, res: Response) => {
 
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production', // only send over HTTPS
+    sameSite: 'none', // required for cross-site
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   res.cookie('role', 'user', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'none',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   const frontendUrl = process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL!;
+  console.log('Redirecting to:', frontendUrl);
 
   res.redirect(frontendUrl);
 };
@@ -128,7 +129,7 @@ export const getMe = async (req: Request, res: Response) => {
   try {
     const user = req.user as UserPayload;
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({ success: false, message: 'User not found' });
     }
 
     return successResponse(res, user, 'User registered successfully', 201);

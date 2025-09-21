@@ -24,11 +24,6 @@ passport.use(
           });
           await user.save();
         }
-
-        // generate JWT
-        // const token = generateToken({ _id: user._id.toString(), role: user.role });
-
-        // pass user + token to callback
         done(null, user);
       } catch (err) {
         done(err, undefined);
