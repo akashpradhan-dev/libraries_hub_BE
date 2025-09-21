@@ -26,14 +26,7 @@ export const login = async (req: Request, res: Response) => {
 
     const token = generateToken({ _id: user._id.toString(), role: user.role });
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
-    return successResponse(res, userWithoutPassword, 'Login successful', 200);
+    return successResponse(res, { ...userWithoutPassword, token }, 'Login successful', 200);
   } catch (error) {
     return errorResponse(res, 'Failed to login', 500, error);
   }
@@ -66,14 +59,12 @@ export const register = async (req: Request, res: Response) => {
 
     const token = generateToken({ _id: savedUser._id.toString(), role: savedUser.role });
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
-    return successResponse(res, userWithoutPassword, 'User registered successfully', 201);
+    return successResponse(
+      res,
+      { ...userWithoutPassword, token },
+      'User registered successfully',
+      201
+    );
   } catch (error) {
     return errorResponse(res, 'Failed to register user', 500, error);
   }
@@ -81,12 +72,6 @@ export const register = async (req: Request, res: Response) => {
 
 export const logout = async (req: Request, res: Response) => {
   try {
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
-
     return res.status(200).json({
       success: true,
       message: 'Logged out successfully',
@@ -99,36 +84,26 @@ export const logout = async (req: Request, res: Response) => {
 export const googleAuth = async (req: Request, res: Response) => {
   const user = req.user as UserPayload;
 
+  const FE_URL = process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL!;
+
   if (!user) {
-    return res.redirect('/login');
+    return res.redirect(FE_URL + '/login');
   }
 
   const token = generateToken({ _id: user._id, role: user.role });
 
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  const frontendUrl = new URL(FE_URL + '/oauth-success');
+  frontendUrl.searchParams.set('token', token);
+  frontendUrl.searchParams.set('role', user.role);
 
-  res.cookie('role', 'user', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  const frontendUrl = process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL!;
-
-  res.redirect(frontendUrl);
+  res.redirect(frontendUrl.toString());
 };
 
 export const getMe = async (req: Request, res: Response) => {
   try {
     const user = req.user as UserPayload;
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
+      return res.status(401).json({ success: false, message: 'User not found' });
     }
 
     return successResponse(res, user, 'User registered successfully', 201);
