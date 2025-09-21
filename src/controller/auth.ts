@@ -119,8 +119,7 @@ export const googleAuth = async (req: Request, res: Response) => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
-  const frontendUrl =
-    process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL || 'http://localhost:3000/oauth-success';
+  const frontendUrl = process.env.FRONTEND_AUTH_SUCCESS_REDIRECT_URL!;
 
   res.redirect(frontendUrl);
 };
