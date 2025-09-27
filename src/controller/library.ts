@@ -3,7 +3,7 @@ import { errorResponse, successResponse } from '@/utils/response';
 import { isValidId } from '@/utils/validId';
 import { Request, Response } from 'express';
 
-const ALLOWED_CATEGORIES = ['Backend', 'Frontend', 'Mobile', 'DevOps'];
+const ALLOWED_CATEGORIES = ['Backend', 'FrontEnd', 'Mobile', 'DevOps'];
 
 export const getLibraries = async (req: Request, res: Response) => {
   try {
