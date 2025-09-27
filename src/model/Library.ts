@@ -2,14 +2,12 @@ import mongoose from 'mongoose';
 
 const LibrarySchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     description: { type: String, required: true },
-    version: { type: String, default: '1.0' },
     repositoryUrl: { type: String, required: true },
     homepageUrl: { type: String },
-    tags: [{ type: String }],
     exampleUsage: { type: String },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'created'],
@@ -21,18 +19,7 @@ const LibrarySchema = new mongoose.Schema(
     },
     language: {
       type: String,
-      enum: [
-        'JavaScript',
-        'TypeScript',
-        'Python',
-        'Java',
-        'C#',
-        'Go',
-        'Ruby',
-        'PHP',
-        'C++',
-        'Other',
-      ],
+      enum: ['JavaScript', 'Python', 'Java', 'C#', 'Go', 'Ruby', 'PHP', 'C++', 'Other'],
     },
     framework: {
       type: String,
@@ -51,7 +38,6 @@ const LibrarySchema = new mongoose.Schema(
         'Laravel',
         'Other',
       ],
-      required: false,
     },
     libraryType: {
       type: String,
@@ -76,9 +62,10 @@ const LibrarySchema = new mongoose.Schema(
       },
     ],
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
+
+// UNIQUE per user
+LibrarySchema.index({ createdBy: 1, name: 1 }, { unique: true });
 
 export default mongoose.model('Library', LibrarySchema);

@@ -25,7 +25,6 @@ export const createLibrary = async (req: Request, res: Response) => {
       description,
       repositoryUrl,
       homepageUrl,
-      tags,
       exampleUsage,
       category,
       language,
@@ -37,9 +36,11 @@ export const createLibrary = async (req: Request, res: Response) => {
       return errorResponse(res, 'Missing required fields', 400);
     }
 
-    const existingLibrary = await Library.find({ name });
+    const existingLibrary = await Library.exists({ createdBy: userId, name });
 
-    if (existingLibrary.length > 0) {
+    console.log(existingLibrary);
+
+    if (existingLibrary) {
       return errorResponse(res, 'Library with this name already exists', 409);
     }
 
@@ -48,7 +49,6 @@ export const createLibrary = async (req: Request, res: Response) => {
       description,
       repositoryUrl,
       homepageUrl,
-      tags,
       exampleUsage,
       createdBy: userId,
       category,
@@ -59,7 +59,7 @@ export const createLibrary = async (req: Request, res: Response) => {
 
     const savedLibrary = await newLibrary.save();
     return successResponse(res, savedLibrary, 'Library created successfully', 201);
-  } catch (error: unknown) {
+  } catch (error) {
     console.log(error);
 
     return errorResponse(res, 'Failed to create library', 500, error);
@@ -184,14 +184,12 @@ export const updateLibrary = async (req: Request, res: Response) => {
       return errorResponse(res, 'Library not found', 404);
     }
 
-    const { name, description, version, repositoryUrl, homepageUrl, tags, exampleUsage } = req.body;
+    const { name, description, repositoryUrl, homepageUrl, exampleUsage } = req.body;
 
     if (name !== undefined) library.name = name;
     if (description !== undefined) library.description = description;
-    if (version !== undefined) library.version = version;
     if (repositoryUrl !== undefined) library.repositoryUrl = repositoryUrl;
     if (homepageUrl !== undefined) library.homepageUrl = homepageUrl;
-    if (tags !== undefined) library.tags = tags;
     if (exampleUsage !== undefined) library.exampleUsage = exampleUsage;
 
     const updatedLibrary = await library.save();
@@ -209,7 +207,6 @@ export const deleteLibrary = async (req: Request, res: Response) => {
       return errorResponse(res, 'Invalid library ID', 400);
     }
     const library = await Library.findByIdAndDelete(id);
-    console.log(library);
 
     if (!library) {
       return errorResponse(res, 'Library not found', 404);
