@@ -3,8 +3,20 @@ import { errorResponse, successResponse } from '@/utils/response';
 import { isValidId } from '@/utils/validId';
 import { Request, Response } from 'express';
 
+const ALLOWED_CATEGORIES = ['Backend', 'Frontend', 'Mobile', 'DevOps'];
+
 export const getLibraries = async (req: Request, res: Response) => {
   try {
+    const category = req.query.category as string | undefined;
+
+    if (category) {
+      if (!ALLOWED_CATEGORIES.includes(category)) {
+        return errorResponse(res, 'Invalid category', 400);
+      }
+      const libraries = await Library.find({ category, status: 'approved' });
+      return successResponse(res, libraries, 'Libraries retrieved successfully', 200);
+    }
+
     const libraries = await Library.find({
       status: 'approved',
     }).populate('createdBy', 'name email');

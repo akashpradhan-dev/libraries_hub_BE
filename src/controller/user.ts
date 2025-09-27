@@ -25,7 +25,6 @@ export const createLibrary = async (req: Request, res: Response) => {
       description,
       repositoryUrl,
       homepageUrl,
-      tags,
       exampleUsage,
       category,
       language,
@@ -37,9 +36,11 @@ export const createLibrary = async (req: Request, res: Response) => {
       return errorResponse(res, 'Missing required fields', 400);
     }
 
-    const existingLibrary = await Library.find({ name });
+    const existingLibrary = await Library.exists({ createdBy: userId, name });
 
-    if (existingLibrary.length > 0) {
+    console.log(existingLibrary);
+
+    if (existingLibrary) {
       return errorResponse(res, 'Library with this name already exists', 409);
     }
 
@@ -48,7 +49,6 @@ export const createLibrary = async (req: Request, res: Response) => {
       description,
       repositoryUrl,
       homepageUrl,
-      tags,
       exampleUsage,
       createdBy: userId,
       category,
@@ -59,7 +59,7 @@ export const createLibrary = async (req: Request, res: Response) => {
 
     const savedLibrary = await newLibrary.save();
     return successResponse(res, savedLibrary, 'Library created successfully', 201);
-  } catch (error: unknown) {
+  } catch (error) {
     console.log(error);
 
     return errorResponse(res, 'Failed to create library', 500, error);
@@ -174,7 +174,11 @@ export const myLibraryById = async (req: Request, res: Response) => {
 
 export const updateLibrary = async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthRequest;
+    const userId = authReq.user?._id;
+
     const { id } = req.params;
+
     if (!isValidId(id)) {
       return errorResponse(res, 'Invalid library ID', 400);
     }
@@ -184,19 +188,52 @@ export const updateLibrary = async (req: Request, res: Response) => {
       return errorResponse(res, 'Library not found', 404);
     }
 
-    const { name, description, version, repositoryUrl, homepageUrl, tags, exampleUsage } = req.body;
+    // Ensure only the creator can update their library
+    if (library.createdBy.toString() !== userId?.toString()) {
+      return errorResponse(res, 'Unauthorized', 403);
+    }
 
-    if (name !== undefined) library.name = name;
+    const {
+      name,
+      description,
+      repositoryUrl,
+      homepageUrl,
+      exampleUsage,
+      category,
+      language,
+      framework,
+      libraryType,
+    } = req.body;
+
+    // If name is being updated, check for uniqueness per user
+    if (name && name !== library.name) {
+      const duplicate = await Library.findOne({
+        createdBy: userId,
+        name,
+        _id: { $ne: id },
+      });
+
+      if (duplicate) {
+        return errorResponse(res, 'Library with this name already exists', 409);
+      }
+
+      library.name = name;
+    }
+
     if (description !== undefined) library.description = description;
-    if (version !== undefined) library.version = version;
     if (repositoryUrl !== undefined) library.repositoryUrl = repositoryUrl;
     if (homepageUrl !== undefined) library.homepageUrl = homepageUrl;
-    if (tags !== undefined) library.tags = tags;
     if (exampleUsage !== undefined) library.exampleUsage = exampleUsage;
+    if (category !== undefined) library.category = category;
+    if (language !== undefined) library.language = language;
+    if (framework !== undefined) library.framework = framework;
+    if (libraryType !== undefined) library.libraryType = libraryType;
 
-    const updatedLibrary = await library.save();
-    return successResponse(res, updatedLibrary, 'Library updated successfully', 200);
+    await library.save();
+
+    return successResponse(res, library, 'Library updated successfully', 200);
   } catch (error) {
+    console.error(error);
     return errorResponse(res, 'Failed to update library', 500, error);
   }
 };
@@ -209,7 +246,6 @@ export const deleteLibrary = async (req: Request, res: Response) => {
       return errorResponse(res, 'Invalid library ID', 400);
     }
     const library = await Library.findByIdAndDelete(id);
-    console.log(library);
 
     if (!library) {
       return errorResponse(res, 'Library not found', 404);
